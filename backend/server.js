@@ -12,8 +12,8 @@ const JWT_SECRET = 'sua_chave_secreta_aqui';
 
 // Usuário simulado (Senha: '123456')
 const usuarioFake = {
-  email: 'admin@email.com',
-  senhaHash: '$2b$10$13T4x1mVb0ifV4p3AsfXpeJ5Lb9C2IFIqFHd3.lXI2Y50WEhsp53i' 
+    email: 'admin@email.com',
+    senhaHash: '$2b$10$13T4x1mVb0ifV4p3AsfXpeJ5Lb9C2IFIqFHd3.lXI2Y50WEhsp53i'
 };
 
 app.get('/home', (request, response) => {
@@ -33,13 +33,39 @@ app.post('/login', async (request, response) => {
 
     // Compara a senha digitada com ela mesma criptografada na hora (apenas para testar se passa!)
     const senhaValida = await bcrypt.compare(senha, usuarioFake.senhaHash);
-    
+
     if (!senhaValida) {
         return response.status(401).json({ mensagem: ' Credenciais inválidas' });
     }
 
     const token = jwt.sign({ email: usuarioFake.email }, JWT_SECRET, { expiresIn: '1h' });
     return response.json({ token });
+});
+
+// ------------------------------------------------------
+
+app.post('/registrar', async (request, response) => {
+
+    try {
+    const { Nome, Email, Senha } = request.body;
+
+    if (!Email || !Senha) {
+        return response.status(400).json({ erro: 'Email e Senha são obrigatórios.' });
+    }
+
+    const hashGerado = await bcrypt.hash(Senha, 10);
+
+    const query = 'INSERT INTO usuarios (nome, email, senha) VALUES ($1, $2, $3)';
+    await app.query(query, [Nome, Email, hashGerado]);
+
+
+
+
+    } catch (error) {
+        console.error(error);
+        return response.status(500).json({ erro: 'Erro interno ao salvar no banco de dados'})
+    }
+
 });
 
 app.listen(3000, () => console.log("Servidor rodando na porta 3000"));
