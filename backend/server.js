@@ -10,11 +10,13 @@ app.use(express.json());
 
 const JWT_SECRET = 'sua_chave_secreta_aqui';
 
-// Usuário simulado (Senha: '123456')
-const usuarioFake = {
-    email: 'admin@email.com',
-    senhaHash: '$2b$10$13T4x1mVb0ifV4p3AsfXpeJ5Lb9C2IFIqFHd3.lXI2Y50WEhsp53i'
-};
+const emailValido = async function(email){
+    return await app.query(`SELECT email FROM usuarios WHERE email = $1`, email)
+}
+
+
+
+
 
 app.get('/home', (request, response) => {
     return response.send("Bem-vindo à nossa API!");
@@ -25,14 +27,18 @@ app.post('/login', async (request, response) => {
     const { email, senha } = request.body;
 
     const hashGerado = await bcrypt.hash(senha, 10);
-    console.log(`Hash gerado para a senha "${senha}":`, hashGerado);
 
-    if (email !== usuarioFake.email) {
-        return response.status(401).json({ mensagem: ' Credenciais inválidas' });
+    console.log(emailValido(email));
+    
+
+    if (email !== emailValido(email)) {
+        return response.status(401).json({ mensagem: 'Credenciais inválidas' });
     }
 
+    const emailVerificado = "SELECT"
+
     // Compara a senha digitada com ela mesma criptografada na hora (apenas para testar se passa!)
-    const senhaValida = await bcrypt.compare(senha, usuarioFake.senhaHash);
+    const senhaValida = await bcrypt.compare(senha, 10);
 
     if (!senhaValida) {
         return response.status(401).json({ mensagem: ' Credenciais inválidas' });
@@ -47,23 +53,21 @@ app.post('/login', async (request, response) => {
 app.post('/registrar', async (request, response) => {
 
     try {
-    const { Nome, Email, Senha } = request.body;
+        const { nome, email, senha } = request.body;
 
-    if (!Email || !Senha) {
-        return response.status(400).json({ erro: 'Email e Senha são obrigatórios.' });
-    }
+        if (!email || !senha) {
+            return response.status(400).json({ erro: 'Email e Senha são obrigatórios.' });
+        }
 
-    const hashGerado = await bcrypt.hash(Senha, 10);
+        const hashGerado = await bcrypt.hash(senha, 10);
 
-    const query = 'INSERT INTO usuarios (nome, email, senha) VALUES ($1, $2, $3)';
-    await app.query(query, [Nome, Email, hashGerado]);
-
-
+        const query = 'INSERT INTO usuarios (nome, email, senha_hash) VALUES ($1, $2, $3)';
+        await app.query(query, [nome, email, hashGerado]);
 
 
     } catch (error) {
         console.error(error);
-        return response.status(500).json({ erro: 'Erro interno ao salvar no banco de dados'})
+        return response.status(500).json({ erro: 'Erro interno ao salvar no banco de dados' })
     }
 
 });

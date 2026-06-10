@@ -28,7 +28,7 @@ function Registrar() {
         <div style={{ padding: '20px' }}>
             <h2>Tela de Cadastro</h2>
             {/* <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', maxWidth: '300px', gap: '10px' }}> */}
-
+ 
                 <div>
                     <label>Nome:</label>
                     <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} required />
